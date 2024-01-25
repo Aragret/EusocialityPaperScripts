@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mem 1000M
 #SBATCH --cpus-per-task=4
-#SBATCH -o /EBB-ZIVNFS/amikhail/termite_genomes/eusociality_paper/analyses/absrel/logs/absrel-%A-%a.out
-#SBATCH -C zivnfs
-#SBATCH --chdir=/EBB-ZIVNFS/amikhail/termite_genomes/eusociality_paper/analyses/absrel
+#SBATCH --array=1-N # job array of the size 1 to the number of alignments
+#SBATCH -o absrel-%A-%a.out
+#SBATCH --chdir=/working/directory
 
 ##Activating the hyphy module
 set -e
@@ -11,20 +11,17 @@ source /etc/profile.d/modules.sh
 module unload selection/hyphy
 module load selection/hyphy/2.5.41_NOAVX
 
-hostname
+alignment_files=/path/to/file/with/alignment/names
 
-#echo $SLURM_ARRAY_TASK_ID 
+# getting each alignment file and truncating the file name to get orthogroup name
+input_alignment=$(head -n $SLURM_ARRAY_TASK_ID $alignment_files | tail -1)
+orthName=${input_alignment%_cds.aln-gb.fas}
 
-# $SLURM_ARRAY_TASK_ID
-maskedfastaFile=$(head -n $SLURM_ARRAY_TASK_ID alignment_files | tail -1)
-orthName=${maskedfastaFile%_cds.aln-gb.fas}
-
-#echo ${maskedfastaFile}
 echo ${orthName}
 
 #setting up variables
-alignmentFile=/EBB-ZIVNFS/amikhail/termite_genomes/eusociality_paper/cds/og_cds/renamed/${maskedfastaFile}
-treeFile=labelled_inner.tree
+alignmentFile=/path/to/${input_alignment}
+treeFile=/path/to/labelled.tree
 outFile=${orthName}-absrel.Output
 
 #running hyphy relax
