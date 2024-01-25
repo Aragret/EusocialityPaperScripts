@@ -6,7 +6,7 @@
 
 - run_gblocks.sh
 
-### Concatenate alignments
+### Concatenate alignments (for phylogeny)
 
 - The program for concatenation that creates a partitioning scheme: https://github.com/PatrickKueck/FASconCAT-G
 
