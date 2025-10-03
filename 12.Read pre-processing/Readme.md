@@ -18,7 +18,9 @@ are the same with the difference that the names, abbreviation, and input
 folder of the species was changed.
 
 J5_Ap_hisat2.sh
+
 J6_Ap_htseq.sh
+
 J7_archiving.sh
 
 J5 maps the genes for each samples using the genome index from the 
