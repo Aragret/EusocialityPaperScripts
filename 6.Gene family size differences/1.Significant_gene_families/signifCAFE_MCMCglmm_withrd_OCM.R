@@ -1,0 +1,92 @@
+#!/usr/bin/Rscript
+
+
+print("importing libraries...")
+
+library(tidyverse, lib.loc = '/home/cedria95/ca3321fu/R/x86_64-pc-linux-gnu-library/4.2')
+library(ape, lib.loc = '/home/cedria95/ca3321fu/R/x86_64-pc-linux-gnu-library/4.2')
+library(geiger, lib.loc = '/home/cedria95/ca3321fu/R/x86_64-pc-linux-gnu-library/4.2')
+library(MCMCglmm, lib.loc = '/home/cedria95/ca3321fu/R/x86_64-pc-linux-gnu-library/4.2')
+library(coda, lib.loc = '/home/cedria95/ca3321fu/R/x86_64-pc-linux-gnu-library/4.2')
+
+
+print("importing arguments")
+args <- commandArgs(trailingOnly = TRUE)
+
+
+
+print("Setting working directory...")
+
+setwd("/scratch/cedria95/Eusociality/MCMCglmm_CAFE")
+
+
+print("Uploading the termite tree...")
+
+Termite_tree <- read.tree("data/tcal_blattodea_tree.tre")
+
+inv.phylo <- inverseA(Termite_tree, nodes = "TIPS", scale = TRUE)$Ainv
+
+print("Uploading the termite dataset...")
+
+data = read.csv("data/dataset_mcmcglmm_cafe.csv",
+                header = T,
+                sep = ";",
+                dec = ",", 
+                stringsAsFactors = T)
+
+
+print("creating priors...")
+
+
+prior.exp.phylo <- list(G = list(
+  G1 = list(V = diag(1), nu = 1, alpha.mu = rep(0,1),
+            alpha.V = diag(1) * 1000),
+  G2 = list(V = diag(1), nu = 1, alpha.mu = rep(0,1),
+            alpha.V = diag(1) * 1000)),
+  R = list(V = diag(1), nu = 0.002))
+
+
+prior.iw.phylo <- list(G = list(
+  G1 = list(V = diag(1)*0.002/2.002, nu = 2.002),
+  G1 = list(V = diag(1)*0.002/2.002, nu = 2.002)),
+  R = list(V = diag(1), nu = 0.002))
+
+#----------------------------------- Model -------------------------------------
+
+
+hog = args[1]
+print(hog)
+print(paste0("Gaussian model for HOG ",hog," gene_count vs Ontogenic_complexity_metric with expanded priors and with random IDs"))
+
+data_subhog = subset(data, data$Family_ID == hog)
+model <- MCMCglmm(gene_count ~ Ontogenic_complexity_metric,
+                  random = ~Species + random_id,
+                  family = "gaussian",
+                  ginverse = list(Species = inv.phylo), 
+                  prior = prior.exp.phylo,
+                  data = data_subhog,
+                  nitt = 13000000,
+                  thin = 5000, 
+                  burnin = 3000000, 
+                  pr = TRUE)
+
+print("saving...")
+save(model, file = paste0("signifCAFE/Gaussian model for HOG ",hog," gene_count vs Ontogenic_complexity_metric with expanded priors and with random IDs.Rdata"))
+print("Done1")
+
+print(paste0("Gaussian model for HOG ",hog," gene_count vs Ontogenic_complexity_metric with iw priors and with random IDs"))
+
+model <- MCMCglmm(gene_count ~ Ontogenic_complexity_metric,
+                  random = ~Species + random_id,
+                  family = "gaussian",
+                  ginverse = list(Species = inv.phylo), 
+                  prior = prior.iw.phylo,
+                  data = data_subhog,
+                  nitt = 13000000,
+                  thin = 5000, 
+                  burnin = 3000000, 
+                  pr = TRUE)
+
+print("saving...")
+save(model, file = paste0("signifCAFE/Gaussian model for HOG ",hog," gene_count vs Ontogenic_complexity_metric with iw priors and with random IDs.Rdata"))
+print("Done1")
